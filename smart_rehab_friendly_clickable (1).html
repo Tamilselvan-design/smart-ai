@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Rehab - Friendly Dashboard</title>
+<style>
+:root{
+  --nav:#12375b; --nav2:#1f5a8d; --blue:#2f66e8; --text:#102a43;
+  --muted:#5f7893; --bg:#f4f7fb; --card:#fff; --line:#dfe6ee;
+  --green:#159447; --red:#d92d20; --orange:#e98b18;
+}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+button{font:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{width:285px;background:var(--nav);color:#fff;padding:28px 18px;flex-shrink:0}
+.logo{font-size:28px;font-weight:800;padding:10px 18px 28px}.logo span{color:#61a6ff}
+.nav{display:grid;gap:9px}.nav button{border:0;background:transparent;color:#fff;text-align:left;padding:15px 18px;border-radius:12px;font-size:18px;cursor:pointer}
+.nav button:hover,.nav button.active{background:#255b8c}.nav button:focus{outline:3px solid #8bc3ff;outline-offset:2px}
+.main{flex:1;padding:38px;min-width:0;overflow:hidden}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
+h1{font-size:32px;margin:0 0 8px}.sub{font-size:18px;color:var(--muted)}
+.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(180px,1fr));gap:22px;margin-bottom:28px}
+.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 5px 16px rgba(16,42,67,.06)}
+.label{color:#54708d;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.3px}.value{font-size:40px;font-weight:800;margin:12px 0;color:var(--blue)}
+.value.red{color:var(--red)}.value.green{color:var(--green)}
+.grid2{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:25px}
+.patient-title{font-size:28px;font-weight:800;margin-bottom:3px}.small{color:var(--muted);font-size:18px}
+.row{display:flex;justify-content:space-between;gap:20px;padding:17px 0;border-bottom:1px solid var(--line);font-size:18px}.row:last-child{border-bottom:0}
+.badge{display:inline-flex;align-items:center;gap:7px;background:#dcfce7;color:#087a3b;border-radius:22px;padding:10px 16px;font-weight:700}
+.progress{height:14px;background:#e8edf3;border-radius:20px;overflow:hidden;margin:20px 0 12px}.bar{height:100%;background:var(--blue);width:80%;transition:width .35s}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.action{border:0;border-radius:11px;padding:12px 17px;background:#e9f0ff;color:#1d55c9;font-weight:700;cursor:pointer}.action:hover{background:#d8e5ff}.action.primary{background:var(--blue);color:#fff}.action.danger{background:#fee4e2;color:#b42318}
+.action:focus{outline:3px solid #9fc2ff;outline-offset:2px}
+.notice{padding:17px;border-radius:13px;margin:12px 0;background:#f1f6ff;border-left:5px solid var(--blue)}
+.notice.high{background:#fff0ef;border-left-color:var(--red)}.notice.good{background:#effcf4;border-left-color:var(--green)}
+.section-title{font-size:24px;margin:0 0 18px}.list{display:grid;gap:12px}.sensor{display:flex;justify-content:space-between;padding:15px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}
+.dot{width:10px;height:10px;border-radius:50%;background:#20b35b;display:inline-block;margin-right:7px}.dot.off{background:#aaa}
+.range{width:100%;accent-color:var(--blue)}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.mini{background:#f7f9fc;border:1px solid var(--line);border-radius:13px;padding:18px}.mini strong{font-size:28px;display:block;margin-top:7px}
+.toast{position:fixed;right:24px;bottom:24px;background:#102a43;color:white;padding:14px 18px;border-radius:12px;box-shadow:0 10px 30px #0002;display:none;z-index:10}.toast.show{display:block}
+select,input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;margin-top:7px}
+label{display:block;font-weight:700;margin:14px 0}.score{font-size:55px;font-weight:800;color:var(--blue)}
+@media(max-width:1050px){.sidebar{width:220px}.cards{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:700px){.app{display:block}.sidebar{width:100%;padding:14px}.logo{padding:8px 10px 14px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap;font-size:15px;padding:12px}.main{padding:20px 14px}.cards{grid-template-columns:1fr}.statgrid{grid-template-columns:1fr}.top{display:block}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">Smart <span>Rehab</span></div>
+  <nav class="nav" aria-label="Main navigation">
+    <button class="active" data-page="dashboard">🏠 Dashboard</button>
+    <button data-page="patient">👤 Patient</button>
+    <button data-page="live">🩺 Live Monitoring</button>
+    <button data-page="feedback">🧠 AI Feedback</button>
+    <button data-page="progress">📊 Progress</button>
+  </nav>
+</aside>
+
+<main class="main">
+<!-- DASHBOARD -->
+<section id="dashboard" class="page active">
+ <div class="top"><div><h1>Rehabilitation Dashboard</h1><div class="sub">Friendly real-time overview of the patient's rehabilitation session</div></div>
+ <button class="action primary" id="refreshBtn">↻ Refresh Data</button></div>
+
+ <div class="cards">
+  <div class="card"><div class="label">Knee Angle</div><div class="value" id="dashAngle">55°</div><div>Target 85° – 95°</div></div>
+  <div class="card"><div class="label">Movement Quality</div><div class="value red" id="dashQuality">POOR</div><div>AI analysis</div></div>
+  <div class="card"><div class="label">Accuracy</div><div class="value" id="dashAccuracy">80%</div><div>Exercise performance</div></div>
+  <div class="card"><div class="label">Risk Level</div><div class="value red" id="dashRisk">HIGH</div><div id="riskText">Current session</div></div>
+ </div>
+
+ <div class="grid2">
+  <div class="panel">
+   <div style="display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap">
+    <div><div class="patient-title">Patient 001</div><div class="small">Knee Rehabilitation</div></div>
+    <span class="badge"><span class="dot"></span>Sensors Online</span>
+   </div>
+   <div class="row"><span>Current Exercise</span><strong id="exerciseName">Knee Extension</strong></div>
+   <div class="row"><span>Target Repetitions</span><strong id="targetReps">10</strong></div>
+   <div class="row"><span>Completed</span><strong><span id="completedReps">8</span> / 10</strong></div>
+   <div class="row"><span>Session Status</span><strong style="color:var(--green)">Active</strong></div>
+   <div class="actions">
+    <button class="action primary" data-page="live">▶ Start Live Monitoring</button>
+    <button class="action" data-page="feedback">🧠 View AI Feedback</button>
+    <button class="action" data-page="progress">📊 View Progress</button>
+   </div>
+  </div>
+  <div class="panel">
+   <h2 class="section-title">Today's Progress</h2>
+   <div class="small">Knee Extension</div>
+   <div class="progress"><div class="bar" id="progressBar"></div></div>
+   <strong><span id="progressReps">8</span> of 10 repetitions completed</strong>
+   <div class="actions"><button class="action primary" id="addRep">＋ Complete Rep</button><button class="action danger" id="resetSession">Reset Session</button></div>
+  </div>
+ </div>
+</section>
+
+<!-- PATIENT -->
+<section id="patient" class="page">
+ <div class="top">
+  <div><h1>Patient Management</h1><div class="sub">Add and manage patients for rehabilitation sessions</div></div>
+  <button class="action primary" id="openAddPatient">＋ Add Patient</button>
+ </div>
+
+ <div class="grid2">
+  <div class="panel">
+   <h2 class="section-title">Current Patient</h2>
+   <div id="currentPatientCard">
+    <div class="patient-title" id="patientDisplayName">Demo Patient</div>
+    <div class="small" id="patientDisplayId">Patient 001</div>
+    <div class="row"><span>Exercise</span><strong id="patientDisplayExercise">Knee Rehabilitation</strong></div>
+    <div class="row"><span>Status</span><strong style="color:var(--green)">Active</strong></div>
+   </div>
+   <div class="actions">
+    <button class="action primary" data-page="live">Start Session</button>
+    <button class="action" data-page="progress">See History</button>
+   </div>
+  </div>
+
+  <div class="panel">
+   <h2 class="section-title">Patient List</h2>
+   <div id="patientList" class="list"></div>
+   <div class="notice" style="margin-top:18px">
+    <strong>Tip:</strong> Select a patient before starting live monitoring.
+   </div>
+  </div>
+ </div>
+
+ <div class="panel" style="margin-top:22px">
+  <h2 class="section-title">Rehabilitation Plan</h2>
+  <label>Exercise
+   <select id="exerciseSelect">
+    <option>Knee Extension</option>
+    <option>Chair Sit-to-Stand</option>
+    <option>Shoulder Raise</option>
+    <option>Posture Training</option>
+   </select>
+  </label>
+  <div class="actions">
+   <button class="action primary" id="saveExercise">Save Exercise Plan</button>
+  </div>
+ </div>
+
+ <div class="panel" id="addPatientPanel" style="margin-top:22px;display:none">
+  <h2 class="section-title">Add New Patient</h2>
+  <form id="patientForm">
+   <label>Patient ID
+    <input id="newPatientId" required placeholder="Example: Patient 002">
+   </label>
+   <label>Patient Name
+    <input id="newPatientName" required placeholder="Enter patient name">
+   </label>
+   <label>Exercise
+    <select id="newPatientExercise">
+     <option>Knee Extension</option>
+     <option>Chair Sit-to-Stand</option>
+     <option>Shoulder Raise</option>
+     <option>Posture Training</option>
+    </select>
+   </label>
+   <div class="actions">
+    <button type="submit" class="action primary">✓ Add Patient</button>
+    <button type="button" class="action" id="cancelAddPatient">Cancel</button>
+   </div>
+  </form>
+ </div>
+</section>
+
+<!-- LIVE -->
+<section id="live" class="page">
+ <div class="top"><div><h1>Live Monitoring</h1><div class="sub">Simulated wearable sensor readings</div></div><span class="badge"><span class="dot"></span>Live</span></div>
+ <div class="panel">
+  <h2 class="section-title">Movement Sensors</h2>
+  <div class="statgrid">
+   <div class="mini">Knee Angle<strong id="liveAngle">55°</strong></div>
+   <div class="mini">sEMG Activity<strong id="liveEmg">68%</strong></div>
+   <div class="mini">Sensor Quality<strong id="liveQuality">94%</strong></div>
+  </div>
+  <label>Knee angle: <span id="angleInputValue">55°</span>
+   <input class="range" id="angleInput" type="range" min="40" max="110" value="55">
+  </label>
+  <div id="liveMessage" class="notice high"><strong>Attention:</strong> knee angle is below the recommended 85°–95° range.</div>
+  <div class="actions">
+   <button class="action primary" id="analyzeBtn">🧠 Analyze Movement</button>
+   <button class="action" id="simulateCorrect">✓ Simulate Correct</button>
+   <button class="action danger" id="simulateError">⚠ Simulate Error</button>
+  </div>
+ </div>
+ <div class="panel" style="margin-top:22px">
+  <h2 class="section-title">Connected Sensors</h2>
+  <div class="list">
+   <div class="sensor"><span>Torso IMU</span><strong>Online</strong></div>
+   <div class="sensor"><span>Wrist / Elbow IMUs</span><strong>Online</strong></div>
+   <div class="sensor"><span>Knee / Ankle IMUs</span><strong>Online</strong></div>
+   <div class="sensor"><span>sEMG electrodes</span><strong>Online</strong></div>
+  </div>
+ </div>
+</section>
+
+<!-- FEEDBACK -->
+<section id="feedback" class="page">
+ <div class="top"><div><h1>AI Feedback</h1><div class="sub">Simple guidance based on movement analysis</div></div></div>
+ <div class="grid2">
+  <div class="panel">
+   <h2 class="section-title">Current Assessment</h2>
+   <div id="feedbackBox" class="notice high"><strong>High Risk:</strong> Your knee is not reaching the recommended movement range.</div>
+   <div class="row"><span>Movement</span><strong id="fbMovement">Incorrect</strong></div>
+   <div class="row"><span>Risk</span><strong id="fbRisk" style="color:var(--red)">HIGH</strong></div>
+   <div class="row"><span>Target</span><strong>85° – 95°</strong></div>
+  </div>
+  <div class="panel">
+   <h2 class="section-title">What to do</h2>
+   <ol style="line-height:2;font-size:17px">
+    <li>Move slowly and keep your posture stable.</li>
+    <li>Try to reach the recommended knee angle.</li>
+    <li>Stop if you feel pain and follow your clinician's advice.</li>
+   </ol>
+   <button class="action primary" id="feedbackDone">✓ Mark Feedback Reviewed</button>
+  </div>
+ </div>
+</section>
+
+<!-- PROGRESS -->
+<section id="progress" class="page">
+ <div class="top">
+  <div><h1>Progress & Comparison</h1><div class="sub">Compare previous rehabilitation data with today's exercise</div></div>
+  <button class="action primary" id="reportBtn">Generate Session Summary</button>
+ </div>
+
+ <div class="panel" style="margin-bottom:22px">
+  <h2 class="section-title">Before vs After Exercise</h2>
+  <div class="statgrid">
+   <div class="mini">
+    <span class="small">Previous Session</span>
+    <strong id="beforeAccuracy">72%</strong>
+    Accuracy
+   </div>
+   <div class="mini">
+    <span class="small">Current Session</span>
+    <strong id="afterAccuracy">80%</strong>
+    Accuracy
+   </div>
+   <div class="mini">
+    <span class="small">Improvement</span>
+    <strong id="accuracyChange">+8%</strong>
+    <span id="accuracyChangeText">Better than previous session</span>
+   </div>
+  </div>
+
+  <div class="row" style="margin-top:12px">
+   <span>Previous knee angle</span><strong id="beforeAngle">68°</strong>
+  </div>
+  <div class="row">
+   <span>Current knee angle</span><strong id="afterAngle">55°</strong>
+  </div>
+  <div class="row">
+   <span>Previous completed repetitions</span><strong id="beforeReps">6 / 10</strong>
+  </div>
+  <div class="row">
+   <span>Current completed repetitions</span><strong id="afterReps">8 / 10</strong>
+  </div>
+
+  <div id="comparisonMessage" class="notice good">
+   <strong>Progress:</strong> Today's completion is higher than the previous session.
+  </div>
+ </div>
+
+ <div class="grid2">
+  <div class="panel">
+   <h2 class="section-title">Session History</h2>
+   <div class="list" id="historyList">
+    <div class="sensor">
+      <div><strong>Today</strong><div class="small">Knee Extension • 8/10 reps</div></div>
+      <strong>80%</strong>
+    </div>
+    <div class="sensor">
+      <div><strong>Previous Session</strong><div class="small">Knee Extension • 6/10 reps</div></div>
+      <strong>72%</strong>
+    </div>
+    <div class="sensor">
+      <div><strong>Earlier Session</strong><div class="small">Knee Extension • 5/10 reps</div></div>
+      <strong>65%</strong>
+    </div>
+   </div>
+   <div class="actions">
+    <button class="action" id="viewOlderBtn">View Older Data</button>
+    <button class="action" id="exportBtn">Export Summary</button>
+   </div>
+   <div id="olderData" class="notice" style="display:none">
+    <strong>Older record:</strong> 58% accuracy, 4/10 repetitions, average knee angle 62°. This can be used as a baseline for long-term improvement.
+   </div>
+  </div>
+
+  <div class="panel">
+   <h2 class="section-title">Overall Progress</h2>
+   <div class="progress"><div class="bar" id="pgBar"></div></div>
+   <p><strong id="pgText">8 of 10 repetitions completed.</strong></p>
+   <div class="statgrid">
+    <div class="mini"><span class="small">Accuracy</span><strong id="pgAccuracy">80%</strong></div>
+    <div class="mini"><span class="small">Completed</span><strong id="pgCompleted">8/10</strong></div>
+    <div class="mini"><span class="small">Overall</span><strong id="pgOverall">82</strong></div>
+   </div>
+   <div class="actions">
+    <button class="action primary" data-page="live">Continue Exercise</button>
+    <button class="action" data-page="feedback">View AI Feedback</button>
+   </div>
+   <div id="report" class="notice" style="display:none"></div>
+  </div>
+ </div>
+</section>
+</main>
+</div>
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<script>
+(function(){
+ const pages=[...document.querySelectorAll('.page')];
+ const nav=[...document.querySelectorAll('.nav button')];
+ const toast=document.getElementById('toast');
+ let reps=8, angle=55, accuracy=80;
+ const previousSession={accuracy:72, reps:6, kneeAngle:68};
+
+ function showToast(msg){
+   toast.textContent=msg; toast.classList.add('show');
+   clearTimeout(showToast.t); showToast.t=setTimeout(()=>toast.classList.remove('show'),2200);
+ }
+ function go(page){
+   pages.forEach(p=>p.classList.toggle('active',p.id===page));
+   nav.forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+   window.scrollTo({top:0,behavior:'smooth'});
+ }
+ document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+
+ const patients = [
+   {id:"Patient 001", name:"Demo Patient", exercise:"Knee Extension", status:"Active"}
+ ];
+ let currentPatient = patients[0];
+
+ function renderPatients(){
+   const list=document.getElementById('patientList');
+   list.innerHTML='';
+   patients.forEach((p)=>{
+     const item=document.createElement('div');
+     item.className='sensor';
+     item.style.cursor='pointer';
+     item.innerHTML='<div><strong>'+escapeHtml(p.name)+'</strong><div class="small">'+escapeHtml(p.id)+' • '+escapeHtml(p.exercise)+'</div></div><button type="button" class="action">Select</button>';
+     item.querySelector('button').addEventListener('click',()=>selectPatient(p.id));
+     list.appendChild(item);
+   });
+ }
+ function escapeHtml(v){
+   return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+ }
+ function selectPatient(id){
+   const p=patients.find(x=>x.id===id);
+   if(!p) return;
+   currentPatient=p;
+   document.getElementById('patientDisplayName').textContent=p.name;
+   document.getElementById('patientDisplayId').textContent=p.id;
+   document.getElementById('patientDisplayExercise').textContent=p.exercise;
+   document.getElementById('exerciseSelect').value=p.exercise;
+   document.getElementById('exerciseName').textContent=p.exercise;
+   showToast(p.name+' selected ✓');
+ }
+ document.getElementById('openAddPatient').addEventListener('click',()=>{
+   const panel=document.getElementById('addPatientPanel');
+   panel.style.display='block';
+   document.getElementById('newPatientId').focus();
+ });
+ document.getElementById('cancelAddPatient').addEventListener('click',()=>{
+   document.getElementById('addPatientPanel').style.display='none';
+ });
+ document.getElementById('patientForm').addEventListener('submit',(e)=>{
+   e.preventDefault();
+   const id=document.getElementById('newPatientId').value.trim();
+   const name=document.getElementById('newPatientName').value.trim();
+   const exercise=document.getElementById('newPatientExercise').value;
+   if(!id || !name){showToast('Please enter patient ID and name');return;}
+   if(patients.some(p=>p.id.toLowerCase()===id.toLowerCase())){
+     showToast('That Patient ID already exists');return;
+   }
+   const p={id,name,exercise,status:"Active"};
+   patients.push(p);
+   document.getElementById('patientForm').reset();
+   document.getElementById('addPatientPanel').style.display='none';
+   selectPatient(p.id);
+   renderPatients();
+   showToast(name+' added successfully ✓');
+ });
+ renderPatients();
+
+ function update(){
+   angle=Math.max(40,Math.min(110,Number(angle)));
+   document.getElementById('dashAngle').textContent=angle+'°';
+   document.getElementById('liveAngle').textContent=angle+'°';
+   document.getElementById('angleInput').value=angle;
+   document.getElementById('angleInputValue').textContent=angle+'°';
+
+   const correct=angle>=85 && angle<=95;
+   const quality=correct?'GOOD':'POOR';
+   const risk=correct?'LOW':'HIGH';
+   document.getElementById('dashQuality').textContent=quality;
+   document.getElementById('dashQuality').className='value '+(correct?'green':'red');
+   document.getElementById('dashRisk').textContent=risk;
+   document.getElementById('dashRisk').className='value '+(correct?'green':'red');
+   document.getElementById('riskText').textContent=correct?'Movement is within target range':'Current session';
+   document.getElementById('liveMessage').className='notice '+(correct?'good':'high');
+   document.getElementById('liveMessage').innerHTML=correct
+      ? '<strong>Great:</strong> knee angle is within the recommended 85°–95° range.'
+      : '<strong>Attention:</strong> knee angle is below or above the recommended 85°–95° range.';
+   document.getElementById('feedbackBox').className='notice '+(correct?'good':'high');
+   document.getElementById('feedbackBox').innerHTML=correct
+      ? '<strong>Low Risk:</strong> Your movement is within the recommended range. Keep the same controlled motion.'
+      : '<strong>High Risk:</strong> Your knee movement is outside the recommended range. Try a slower, controlled movement.';
+   document.getElementById('fbMovement').textContent=correct?'Correct':'Incorrect';
+   document.getElementById('fbRisk').textContent=risk;
+   document.getElementById('fbRisk').style.color=correct?'var(--green)':'var(--red)';
+   document.getElementById('dashAccuracy').textContent=accuracy+'%';
+   document.getElementById('pgAccuracy').textContent=accuracy+'%';
+   document.getElementById('completedReps').textContent=reps;
+   document.getElementById('progressReps').textContent=reps;
+   document.getElementById('pgCompleted').textContent=reps+'/10';
+   const pct=Math.round(reps/10*100);
+   document.getElementById('progressBar').style.width=pct+'%';
+   document.getElementById('pgBar').style.width=pct+'%';
+   document.getElementById('pgText').textContent=reps+' of 10 repetitions completed.';
+   document.getElementById('pgOverall').textContent=Math.round((accuracy+ (correct?90:75))/2);
+
+   const accDiff=accuracy-previousSession.accuracy;
+   const repDiff=reps-previousSession.reps;
+   const angleDiff=angle-previousSession.kneeAngle;
+   document.getElementById('beforeAccuracy').textContent=previousSession.accuracy+'%';
+   document.getElementById('afterAccuracy').textContent=accuracy+'%';
+   document.getElementById('accuracyChange').textContent=(accDiff>=0?'+':'')+accDiff+'%';
+   document.getElementById('accuracyChangeText').textContent=accDiff>=0?'Better than previous session':'Lower than previous session';
+   document.getElementById('beforeAngle').textContent=previousSession.kneeAngle+'°';
+   document.getElementById('afterAngle').textContent=angle+'°';
+   document.getElementById('beforeReps').textContent=previousSession.reps+' / 10';
+   document.getElementById('afterReps').textContent=reps+' / 10';
+
+   const comparison=document.getElementById('comparisonMessage');
+   if(accDiff>0 || repDiff>0){
+      comparison.className='notice good';
+      comparison.innerHTML='<strong>Improvement:</strong> Current accuracy is '+Math.abs(accDiff)+' percentage points '+(accDiff>=0?'higher':'lower')+' and completed repetitions are '+Math.abs(repDiff)+' '+(repDiff>=0?'more':'fewer')+' than the previous session.';
+   }else{
+      comparison.className='notice high';
+      comparison.innerHTML='<strong>Comparison:</strong> Today’s performance has not improved yet. Keep practicing with controlled movement.';
+   }
+ }
+ document.getElementById('angleInput').addEventListener('input',e=>{angle=Number(e.target.value);update()});
+ document.getElementById('simulateCorrect').addEventListener('click',()=>{angle=90;accuracy=Math.min(100,accuracy+2);update();showToast('Correct movement simulated ✓')});
+ document.getElementById('simulateError').addEventListener('click',()=>{angle=55;accuracy=Math.max(0,accuracy-2);update();showToast('Movement error simulated ⚠')});
+ document.getElementById('analyzeBtn').addEventListener('click',()=>{update();showToast(angle>=85&&angle<=95?'AI: Correct movement':'AI: Incorrect movement — feedback updated')});
+ document.getElementById('addRep').addEventListener('click',()=>{if(reps<10){reps++;accuracy=Math.min(100,accuracy+(angle>=85&&angle<=95?2:0));update();showToast('Repetition completed ✓')}else showToast('Target of 10 repetitions reached')});
+ document.getElementById('resetSession').addEventListener('click',()=>{reps=0;accuracy=0;update();showToast('Session reset')});
+ document.getElementById('refreshBtn').addEventListener('click',()=>{update();showToast('Dashboard refreshed')});
+ document.getElementById('saveExercise').addEventListener('click',()=>{
+   const ex=document.getElementById('exerciseSelect').value;
+   currentPatient.exercise=ex;
+   document.getElementById('exerciseName').textContent=ex;
+   document.getElementById('patientDisplayExercise').textContent=ex;
+   renderPatients();
+   showToast('Exercise plan saved ✓');
+   go('dashboard');
+ });
+ document.getElementById('feedbackDone').addEventListener('click',()=>showToast('Feedback marked as reviewed ✓'));
+ document.getElementById('reportBtn').addEventListener('click',()=>{
+   const r=document.getElementById('report'); r.style.display='block';
+   r.innerHTML='<strong>Before → After Summary:</strong> Accuracy '+previousSession.accuracy+'% → '+accuracy+'%; repetitions '+previousSession.reps+'/10 → '+reps+'/10; knee angle '+previousSession.kneeAngle+'° → '+angle+'°. Use this comparison to track rehabilitation progress over time.';
+   showToast('Comparison summary generated ✓');
+ });
+ document.getElementById('viewOlderBtn').addEventListener('click',()=>{
+   const box=document.getElementById('olderData');
+   box.style.display=box.style.display==='none'?'block':'none';
+   showToast(box.style.display==='block'?'Older data shown':'Older data hidden');
+ });
+ document.getElementById('exportBtn').addEventListener('click',()=>{
+   const text='Smart Rehab Summary\nPatient: '+currentPatient.name+' ('+currentPatient.id+')\nPrevious accuracy: '+previousSession.accuracy+'%\nCurrent accuracy: '+accuracy+'%\nPrevious repetitions: '+previousSession.reps+'/10\nCurrent repetitions: '+reps+'/10\nPrevious knee angle: '+previousSession.kneeAngle+'°\nCurrent knee angle: '+angle+'°';
+   const blob=new Blob([text],{type:'text/plain'});
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement('a'); a.href=url; a.download='smart-rehab-summary.txt'; a.click();
+   URL.revokeObjectURL(url);
+   showToast('Summary exported ✓');
+ });
+ update();
+ selectPatient(currentPatient.id);
+})();
+</script>
+</body>
+</html>
